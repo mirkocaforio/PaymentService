@@ -53,7 +53,7 @@ public class PaymentMessageHandler {
         return user;
     }
 
-    @RabbitListener(queues = "${rabbitmq.queue.user.name}")
+    @RabbitListener(queues = "${rabbitmq.queue.users.name}")
     public void receiveUserMessage(PaymentInfoMessageDTO paymentInfoMessageDTO) {
         try {
             LOGGER.info("Received message: {}", paymentInfoMessageDTO.toString());
