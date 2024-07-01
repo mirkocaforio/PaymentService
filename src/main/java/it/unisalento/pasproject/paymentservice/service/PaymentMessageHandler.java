@@ -57,7 +57,7 @@ public class PaymentMessageHandler {
     public void receiveUserMessage(PaymentInfoMessageDTO paymentInfoMessageDTO) {
         try {
             LOGGER.info("Received message: {}", paymentInfoMessageDTO.toString());
-            Optional<User> user = userRepository.findByEmail(paymentInfoMessageDTO.getEmail());
+            Optional<User> user = userRepository.findByUserEmail(paymentInfoMessageDTO.getEmail());
 
             if (user.isPresent()) {
                 User userToUpdate = user.get();

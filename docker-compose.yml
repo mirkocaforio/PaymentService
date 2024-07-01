@@ -22,9 +22,9 @@ services:
     ports:
       - "${MONGO_PORT}:27017"
     volumes:
-      - mongo_request:/etc/mongo
-      - mongo_request_data:/data/db
-      - mongo_request_config:/data/configdb
+      - mongo_payment:/etc/mongo
+      - mongo_payment_data:/data/db
+      - mongo_payment_config:/data/configdb
     networks:
       - greenspot-net
 
@@ -32,6 +32,6 @@ networks:
   greenspot-net:
 
 volumes:
-  mongo_request:
-  mongo_request_data:
-  mongo_request_config:
+  mongo_payment:
+  mongo_payment_data:
+  mongo_payment_config:

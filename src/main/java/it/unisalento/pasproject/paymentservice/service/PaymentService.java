@@ -102,7 +102,7 @@ public class PaymentService {
     }
 
     public Invoice updateInvoice(Invoice invoice) {
-        Optional<User> usr = userRepository.findByEmail(invoice.getUserEmail());
+        Optional<User> usr = userRepository.findByUserEmail(invoice.getUserEmail());
 
         if (usr.isEmpty()) {
             throw new UserNotFoundException("User with email " + invoice.getUserEmail() + " not found");
