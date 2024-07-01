@@ -15,54 +15,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class RabbitMQConfig {
-
-    // ------  SECURITY  ------ //
-
-    // Needed by authentication service
-    @Value("${rabbitmq.queue.security.name}")
-    private String securityResponseQueue;
-
-    @Value("${rabbitmq.exchange.security.name}")
-    private String securityExchange;
-
-    @Value("${rabbitmq.routing.security.key}")
-    private String securityRequestRoutingKey;
-
-    /**
-     * Defines the security response queue.
-     *
-     * @return a new Queue instance
-     */
-    @Bean
-    public Queue securityResponseQueue() {
-        return new Queue(securityResponseQueue);
-    }
-
-    /**
-     * Defines the security exchange.
-     *
-     * @return a new TopicExchange instance
-     */
-    @Bean
-    public TopicExchange securityExchange() {
-        return new TopicExchange(securityExchange);
-    }
-
-    /**
-     * Defines the binding between the security response queue and the security exchange.
-     *
-     * @return a new Binding instance
-     */
-    @Bean
-    public Binding securityBinding() {
-        return BindingBuilder
-                .bind(securityResponseQueue())
-                .to(securityExchange())
-                .with(securityRequestRoutingKey);
-    }
-
-    // ------  END SECURITY  ------ //
-
     // ------  USERS INFO  ------ //
     @Value("${rabbitmq.queue.users.name}")
     private String usersQueue;
