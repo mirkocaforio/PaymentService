@@ -1,24 +1,24 @@
 services:
-  request-service:
+  payment-service:
     image: openjdk:22-jdk-oracle
-    container_name: requestimage
+    container_name: paymentimage
     ports:
       - "${SERVICE_PORT1}:8080"
       - "${SERVICE_PORT2}:8000"
     env_file:
       - .env
     depends_on:
-      - request-db
+      - payment-db
     networks:
       - greenspot-net
     volumes:
-      - ./build/libs/RequestManagementService-v0.0.1.jar:/app/app.jar
+      - ./build/libs/PaymentService-v0.0.1.jar:/app/app.jar
     working_dir: /app
     entrypoint: java -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000 -jar /app/app.jar
 
-  request-db:
+  payment-db:
     image: mongo:latest
-    container_name: requestdb
+    container_name: paymentdb
     ports:
       - "${MONGO_PORT}:27017"
     volumes:
