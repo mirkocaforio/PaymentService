@@ -8,6 +8,6 @@ import lombok.Setter;
 public class SettingDTO {
     private String id;
     private double mediumEnergyCost;
-    private double mediumResourceConsumption;
-    private double changeConstant;
+    private float mediumResourceConsumption;
+    private float changeConstant;
 }

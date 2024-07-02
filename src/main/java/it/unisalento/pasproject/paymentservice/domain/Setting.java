@@ -10,6 +10,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Setting {
     private String id;
     private double mediumEnergyCost;
-    private double mediumResourceConsumption;
-    private double changeConstant;
+    private float mediumResourceConsumption;
+    private float changeConstant;
 }
