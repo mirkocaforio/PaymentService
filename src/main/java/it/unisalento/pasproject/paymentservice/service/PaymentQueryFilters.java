@@ -17,7 +17,7 @@ public class PaymentQueryFilters {
     private String userEmail;
     private String invoicePaymentMethod;
     private LocalDateTime invoicePaymentDate;
-    private float invoiceAmount;
+    private float invoiceTotalAmount;
     private Status invoiceStatus;
     private LocalDateTime invoiceOverdueDate;
 }

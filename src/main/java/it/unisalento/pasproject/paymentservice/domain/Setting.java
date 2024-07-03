@@ -12,4 +12,5 @@ public class Setting {
     private double mediumEnergyCost;
     private float mediumResourceConsumption;
     private float changeConstant;
+    private float delayInterest;
 }

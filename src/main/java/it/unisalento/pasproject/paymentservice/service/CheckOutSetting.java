@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -23,6 +25,9 @@ public class CheckOutSetting {
     @Value("${change.constant.init}")
     private float changeConstant;
 
+    @Value("${delay.interest.init}")
+    private float delayInterest;
+
     private final SettingRepository settingsRepository;
 
     @Autowired
@@ -36,6 +41,7 @@ public class CheckOutSetting {
         Optional.of(settingDTO.getMediumEnergyCost()).ifPresent(setting::setMediumEnergyCost);
         Optional.of(settingDTO.getMediumResourceConsumption()).ifPresent(setting::setMediumResourceConsumption);
         Optional.of(settingDTO.getChangeConstant()).ifPresent(setting::setChangeConstant);
+        Optional.of(settingDTO.getDelayInterest()).ifPresent(setting::setDelayInterest);
 
         return setting;
     }
@@ -47,6 +53,7 @@ public class CheckOutSetting {
         Optional.of(setting.getMediumEnergyCost()).ifPresent(settingDTO::setMediumEnergyCost);
         Optional.of(setting.getMediumResourceConsumption()).ifPresent(settingDTO::setMediumResourceConsumption);
         Optional.of(setting.getChangeConstant()).ifPresent(settingDTO::setChangeConstant);
+        Optional.of(setting.getDelayInterest()).ifPresent(settingDTO::setDelayInterest);
 
         return settingDTO;
     }
@@ -55,6 +62,12 @@ public class CheckOutSetting {
         double creditValue = mediumEnergyCost * mediumResourceConsumption;
         creditValue += creditValue * changeConstant;
         return (float) (credits * creditValue);
+    }
+
+    public float calculateAmountWithDelay(float amount, LocalDateTime overdueDate) {
+        LocalDateTime now = LocalDateTime.now();
+        long days = now.toLocalDate().toEpochDay() - overdueDate.toLocalDate().toEpochDay();
+        return amount * (delayInterest/365) * days;
     }
 
     public SettingDTO getSetting() {
@@ -76,6 +89,7 @@ public class CheckOutSetting {
             settingToUpdate.setMediumEnergyCost(settingDTO.getMediumEnergyCost());
             settingToUpdate.setMediumResourceConsumption(settingDTO.getMediumResourceConsumption());
             settingToUpdate.setChangeConstant(settingDTO.getChangeConstant());
+            settingToUpdate.setDelayInterest(settingDTO.getDelayInterest());
             return getSettingDTO(settingsRepository.save(settingToUpdate));
         } else {
             Setting newSetting = createSetting();
@@ -89,6 +103,7 @@ public class CheckOutSetting {
         newSetting.setMediumEnergyCost(mediumEnergyCost);
         newSetting.setMediumResourceConsumption(mediumResourceConsumption);
         newSetting.setChangeConstant(changeConstant);
+        newSetting.setDelayInterest(delayInterest);
 
         return settingsRepository.save(newSetting);
     }

@@ -1,15 +1,12 @@
 package it.unisalento.pasproject.paymentservice.business;
 
 import it.unisalento.pasproject.paymentservice.domain.Invoice;
-import it.unisalento.pasproject.paymentservice.domain.Item;
 import it.unisalento.pasproject.paymentservice.domain.ItemList;
 import it.unisalento.pasproject.paymentservice.domain.User;
 import it.unisalento.pasproject.paymentservice.dto.GeneralRequestDTO;
 import it.unisalento.pasproject.paymentservice.dto.NotificationMessageDTO;
 import it.unisalento.pasproject.paymentservice.dto.TransactionRequestMessageDTO;
-import it.unisalento.pasproject.paymentservice.repositories.InvoiceRepository;
 import it.unisalento.pasproject.paymentservice.repositories.UserRepository;
-import it.unisalento.pasproject.paymentservice.service.CheckOutSetting;
 import it.unisalento.pasproject.paymentservice.service.NotificationMessageHandler;
 import it.unisalento.pasproject.paymentservice.service.PaymentMessageHandler;
 import it.unisalento.pasproject.paymentservice.service.WalletMessageHandler;
@@ -26,18 +23,18 @@ import static it.unisalento.pasproject.paymentservice.service.NotificationConsta
 
 @Component
 public class InvoiceEmitter {
-    private final CheckOutSetting checkOutSetting;
     private final UserRepository userRepository;
-    private final InvoiceRepository invoiceRepository;
+    private final CreditCardValidationStrategy creditCardValidationStrategy;
+    private final InvoiceFactory invoiceFactory;
     private final NotificationMessageHandler notificationMessageHandler;
     private final PaymentMessageHandler paymentMessageHandler;
     private final WalletMessageHandler walletMessageHandler;
 
     @Autowired
-    public InvoiceEmitter(CheckOutSetting checkOutSetting, UserRepository userRepository, InvoiceRepository invoiceRepository, NotificationMessageHandler notificationMessageHandler, PaymentMessageHandler paymentMessageHandler, WalletMessageHandler walletMessageHandler) {
-        this.checkOutSetting = checkOutSetting;
+    public InvoiceEmitter(UserRepository userRepository, CreditCardValidationStrategy creditCardValidationStrategy, InvoiceFactory invoiceFactory, NotificationMessageHandler notificationMessageHandler, PaymentMessageHandler paymentMessageHandler, WalletMessageHandler walletMessageHandler) {
         this.userRepository = userRepository;
-        this.invoiceRepository = invoiceRepository;
+        this.creditCardValidationStrategy = creditCardValidationStrategy;
+        this.invoiceFactory = invoiceFactory;
         this.notificationMessageHandler = notificationMessageHandler;
         this.paymentMessageHandler = paymentMessageHandler;
         this.walletMessageHandler = walletMessageHandler;
@@ -47,44 +44,7 @@ public class InvoiceEmitter {
         YearMonth registrationYearMonth = YearMonth.from(registrationDate);
         YearMonth currentYearMonth = YearMonth.from(currentDate);
 
-        if (currentYearMonth.isAfter(registrationYearMonth)) {
-            return registrationDate.getDayOfMonth() == currentDate.getDayOfMonth();
-        }
-
-        return false;
-    }
-
-    public boolean isPaymentMethodValid(User user) {
-        YearMonth currentDate = YearMonth.now();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
-        YearMonth cardExpiryDate = YearMonth.parse(user.getCardExpiryDate(), formatter);
-
-        return cardExpiryDate.isAfter(currentDate) || cardExpiryDate.equals(currentDate);
-    }
-
-    public Invoice crateInvoice(User user, ItemList itemList) {
-        float totalAmount = Float.parseFloat((itemList.getItems().stream().mapToDouble(Item::getAmount).sum()) + "");
-
-        if (totalAmount == 0) {
-            return null;
-        }
-
-        Invoice invoice = new Invoice();
-
-        invoice.setInvoiceDescription("Invoice generated on " + LocalDate.now() + " for the payment of tasks submitted in the last month.");
-        invoice.setUserEmail(user.getUserEmail());
-        invoice.setInvoicePaymentMethod("Credit card");
-        invoice.setInvoicePaymentDate(LocalDateTime.now());
-        invoice.setInvoiceItems(itemList);
-        invoice.setInvoiceAmount(checkOutSetting.convertCreditsToMoney(totalAmount));
-        invoice.setInvoiceStatus(Invoice.Status.PENDING);
-        invoice.setInvoiceOverdueDate(LocalDateTime.now().plusDays(15));
-
-        invoice = invoiceRepository.save(invoice);
-
-        return invoice;
-
+        return currentYearMonth.isAfter(registrationYearMonth) && registrationDate.getDayOfMonth() == currentDate.getDayOfMonth();
     }
 
     public NotificationMessageDTO createNotificationMessage(User user, Invoice invoice) {
@@ -94,8 +54,6 @@ public class InvoiceEmitter {
                 invoice.getInvoicePaymentDate().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 invoice.getInvoiceAmount(),
                 invoice.getInvoiceOverdueDate().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
-
-        //TODO: CAPIRE SE MANDARE ATTACHMENT O MENO
 
         return notificationMessageHandler.buildNotificationMessage(
                 user.getUserEmail(),
@@ -117,7 +75,7 @@ public class InvoiceEmitter {
             LocalDateTime currentDate = LocalDateTime.now();
 
             if (isInvoiceGenerationDay(registrationDate, currentDate.toLocalDate())) {
-                if (isPaymentMethodValid(user)) {
+                if (creditCardValidationStrategy.isPaymentMethodValid(user)) {
                     TransactionRequestMessageDTO transactionRequestMessageDTO = new TransactionRequestMessageDTO();
                     transactionRequestMessageDTO.setUserEmail(user.getUserEmail());
                     transactionRequestMessageDTO.setFrom(currentDate.minusMonths(1));
@@ -129,7 +87,7 @@ public class InvoiceEmitter {
                         continue;
                     }
 
-                    Invoice invoice = crateInvoice(user, itemList);
+                    Invoice invoice = invoiceFactory.createInvoice(user, itemList);
 
                     NotificationMessageDTO notificationMessageDTO = createNotificationMessage(user, invoice);
 

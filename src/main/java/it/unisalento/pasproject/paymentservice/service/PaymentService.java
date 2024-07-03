@@ -1,11 +1,13 @@
 package it.unisalento.pasproject.paymentservice.service;
 
+import it.unisalento.pasproject.paymentservice.business.CreditCardValidationStrategy;
 import it.unisalento.pasproject.paymentservice.controller.InvoiceController;
 import it.unisalento.pasproject.paymentservice.domain.Invoice;
 import it.unisalento.pasproject.paymentservice.domain.User;
 import it.unisalento.pasproject.paymentservice.dto.InvoiceDTO;
 import it.unisalento.pasproject.paymentservice.dto.InvoiceListDTO;
 import it.unisalento.pasproject.paymentservice.exceptions.InvoiceNotFoundException;
+import it.unisalento.pasproject.paymentservice.exceptions.PaymentMethodInvalidException;
 import it.unisalento.pasproject.paymentservice.exceptions.UserNotFoundException;
 import it.unisalento.pasproject.paymentservice.repositories.InvoiceRepository;
 import it.unisalento.pasproject.paymentservice.repositories.UserRepository;
@@ -18,8 +20,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,24 +31,36 @@ public class PaymentService {
 
     private final UserRepository userRepository;
 
+    private final CreditCardValidationStrategy creditCardValidationStrategy;
+
+    private final CheckOutSetting checkOutSetting;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(InvoiceController.class);
 
     @Autowired
-    public PaymentService(MongoTemplate mongoTemplate, InvoiceRepository invoiceRepository, UserRepository userRepository) {
+    public PaymentService(MongoTemplate mongoTemplate, InvoiceRepository invoiceRepository, UserRepository userRepository, CreditCardValidationStrategy creditCardValidationStrategy, CheckOutSetting checkOutSetting) {
         this.mongoTemplate = mongoTemplate;
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
+        this.creditCardValidationStrategy = creditCardValidationStrategy;
+        this.checkOutSetting = checkOutSetting;
     }
 
     public Invoice getInvoice(InvoiceDTO invoiceDTO) {
         Invoice invoice = new Invoice();
 
         Optional.ofNullable(invoiceDTO.getInvoiceDescription()).ifPresent(invoice::setInvoiceDescription);
+        Optional.ofNullable(invoiceDTO.getUserName()).ifPresent(invoice::setUserName);
+        Optional.ofNullable(invoiceDTO.getUserSurname()).ifPresent(invoice::setUserSurname);
         Optional.ofNullable(invoiceDTO.getUserEmail()).ifPresent(invoice::setUserEmail);
+        Optional.ofNullable(invoiceDTO.getUserResidenceCity()).ifPresent(invoice::setUserResidenceCity);
+        Optional.ofNullable(invoiceDTO.getUserResidenceAddress()).ifPresent(invoice::setUserResidenceAddress);
         Optional.ofNullable(invoiceDTO.getInvoicePaymentMethod()).ifPresent(invoice::setInvoicePaymentMethod);
         Optional.ofNullable(invoiceDTO.getInvoicePaymentDate()).ifPresent(invoice::setInvoicePaymentDate);
         Optional.ofNullable(invoiceDTO.getInvoiceItems()).ifPresent(invoice::setInvoiceItems);
-        Optional.of(invoiceDTO.getInvoiceAmount()).ifPresent(invoice::setInvoiceAmount);
+        Optional.of(invoiceDTO.getInvoicePartialAmount()).ifPresent(invoice::setInvoicePartialAmount);
+        Optional.of(invoiceDTO.getInvoiceDelayAmount()).ifPresent(invoice::setInvoiceDelayAmount);
+        Optional.of(invoiceDTO.getInvoiceTotalAmount()).ifPresent(invoice::setInvoiceTotalAmount);
         Optional.ofNullable(invoiceDTO.getInvoiceStatus())
                 .map(Enum::name)
                 .map(Invoice.Status::valueOf)
@@ -63,11 +75,17 @@ public class PaymentService {
 
         Optional.ofNullable(invoice.getInvoiceNumber()).ifPresent(invoiceDTO::setInvoiceNumber);
         Optional.ofNullable(invoice.getInvoiceDescription()).ifPresent(invoiceDTO::setInvoiceDescription);
+        Optional.ofNullable(invoice.getUserName()).ifPresent(invoiceDTO::setUserName);
+        Optional.ofNullable(invoice.getUserSurname()).ifPresent(invoiceDTO::setUserSurname);
         Optional.ofNullable(invoice.getUserEmail()).ifPresent(invoiceDTO::setUserEmail);
+        Optional.ofNullable(invoice.getUserResidenceCity()).ifPresent(invoiceDTO::setUserResidenceCity);
+        Optional.ofNullable(invoice.getUserResidenceAddress()).ifPresent(invoiceDTO::setUserResidenceAddress);
         Optional.ofNullable(invoice.getInvoicePaymentMethod()).ifPresent(invoiceDTO::setInvoicePaymentMethod);
         Optional.ofNullable(invoice.getInvoicePaymentDate()).ifPresent(invoiceDTO::setInvoicePaymentDate);
         Optional.ofNullable(invoice.getInvoiceItems()).ifPresent(invoiceDTO::setInvoiceItems);
-        Optional.of(invoice.getInvoiceAmount()).ifPresent(invoiceDTO::setInvoiceAmount);
+        Optional.of(invoice.getInvoicePartialAmount()).ifPresent(invoiceDTO::setInvoicePartialAmount);
+        Optional.of(invoice.getInvoiceDelayAmount()).ifPresent(invoiceDTO::setInvoiceDelayAmount);
+        Optional.of(invoice.getInvoiceTotalAmount()).ifPresent(invoiceDTO::setInvoiceTotalAmount);
         Optional.ofNullable(invoice.getInvoiceStatus())
                 .map(Enum::name)
                 .map(InvoiceDTO.Status::valueOf)
@@ -110,17 +128,19 @@ public class PaymentService {
 
         User user = usr.get();
 
-        LocalDateTime currentDate = LocalDateTime.now();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
-        YearMonth cardExpiryDate = YearMonth.parse(user.getCardExpiryDate(), formatter);
-
-        if (cardExpiryDate.isAfter(YearMonth.from(currentDate)) || cardExpiryDate.equals(YearMonth.from(currentDate))) {
-            if (invoice.getInvoiceOverdueDate().isAfter(currentDate)) {
+        if (creditCardValidationStrategy.isPaymentMethodValid(user)) {
+            if (invoice.getInvoiceStatus().equals(Invoice.Status.PENDING)) {
                 invoice.setInvoiceStatus(Invoice.Status.PAID);
-            } else {
-                invoice.setInvoiceStatus(Invoice.Status.OVERDUE);
+                invoice.setInvoicePaymentDate(LocalDateTime.now());
+            } else if (invoice.getInvoiceStatus().equals(Invoice.Status.OVERDUE)) {
+                float delayAmount = checkOutSetting.calculateAmountWithDelay(invoice.getInvoiceTotalAmount(), invoice.getInvoiceOverdueDate());
+                invoice.setInvoiceDelayAmount(delayAmount);
+                invoice.setInvoiceTotalAmount(invoice.getInvoiceTotalAmount() + delayAmount);
+                invoice.setInvoiceStatus(Invoice.Status.PAID);
+                invoice.setInvoicePaymentDate(LocalDateTime.now());
             }
+        } else {
+            throw new PaymentMethodInvalidException("Payment method is invalid");
         }
 
         return invoice;
@@ -157,8 +177,8 @@ public class PaymentService {
             query.addCriteria(Criteria.where("invoicePaymentDate").is(paymentQueryFilters.getInvoicePaymentDate()));
         }
 
-        if (paymentQueryFilters.getInvoiceAmount() != 0) {
-            query.addCriteria(Criteria.where("invoiceAmount").is(paymentQueryFilters.getInvoiceAmount()));
+        if (paymentQueryFilters.getInvoiceTotalAmount() != 0) {
+            query.addCriteria(Criteria.where("invoiceTotalAmount").is(paymentQueryFilters.getInvoiceTotalAmount()));
         }
 
         if (paymentQueryFilters.getInvoiceStatus() != null) {

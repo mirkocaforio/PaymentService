@@ -20,7 +20,11 @@ public class InvoiceDTO {
 
     private String invoiceNumber;
     private String invoiceDescription;
+    private String userName;
+    private String userSurname;
     private String userEmail;
+    private String userResidenceCity;
+    private String userResidenceAddress;
     private String invoicePaymentMethod;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
@@ -28,7 +32,9 @@ public class InvoiceDTO {
 
     @JsonDeserialize(using = ItemDeserializer.class)
     private ItemList invoiceItems;
-    private float invoiceAmount;
+    private float invoicePartialAmount;
+    private float invoiceDelayAmount;
+    private float invoiceTotalAmount;
     private Status invoiceStatus;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
