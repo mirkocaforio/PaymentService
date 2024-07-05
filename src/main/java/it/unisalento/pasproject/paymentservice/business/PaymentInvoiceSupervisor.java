@@ -15,7 +15,8 @@ public class PaymentInvoiceSupervisor {
     }
 
     @PostConstruct
-    @Scheduled(cron = "0 0 6 * * ?")
+    //@Scheduled(cron = "0 0 6 * * ?")
+    @Scheduled(fixedRate = 5000)
     public void checkInvoiceGeneration() {
         invoiceEmitter.emitInvoice();
     }
