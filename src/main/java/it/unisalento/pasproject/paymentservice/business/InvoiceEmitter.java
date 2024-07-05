@@ -93,7 +93,6 @@ public class InvoiceEmitter {
                     ItemList itemList = paymentMessageHandler.requestInvoiceItems(transactionRequestMessageDTO);
 
                     if (itemList != null) {
-
                         LOGGER.info("Received invoice items for user: items {}", itemList.getItems().size());
 
                         Invoice invoice = invoiceFactory.createInvoice(user, itemList);

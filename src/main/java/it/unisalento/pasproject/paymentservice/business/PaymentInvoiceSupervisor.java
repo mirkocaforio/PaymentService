@@ -1,6 +1,5 @@
 package it.unisalento.pasproject.paymentservice.business;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,7 +13,6 @@ public class PaymentInvoiceSupervisor {
         this.invoiceEmitter = invoiceEmitter;
     }
 
-    @PostConstruct
     //@Scheduled(cron = "0 0 6 * * ?")
     @Scheduled(fixedRate = 5000)
     public void checkInvoiceGeneration() {
