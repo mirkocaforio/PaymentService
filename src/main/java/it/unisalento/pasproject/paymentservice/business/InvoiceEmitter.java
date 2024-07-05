@@ -1,6 +1,5 @@
 package it.unisalento.pasproject.paymentservice.business;
 
-import it.unisalento.pasproject.paymentservice.controller.InvoiceController;
 import it.unisalento.pasproject.paymentservice.domain.Invoice;
 import it.unisalento.pasproject.paymentservice.domain.ItemList;
 import it.unisalento.pasproject.paymentservice.domain.User;
@@ -71,57 +70,38 @@ public class InvoiceEmitter {
         );
     }
 
-    //TODO: DA SISTEMARE CON LA LISTA DI ITEM DA RECUPERARE DAL TRANSACTION SERVICE
     public void emitInvoice() {
         List<User> users = userRepository.findAll();
-
-        LOGGER.info("Emitting invoices for {} users", users.size());
 
         for (User user : users) {
             LocalDate registrationDate = user.getRegistrationDate().toLocalDate();
             LocalDateTime currentDate = LocalDateTime.now();
 
-            //if (isInvoiceGenerationDay(registrationDate, currentDate.toLocalDate())) {
+            if (isInvoiceGenerationDay(registrationDate, currentDate.toLocalDate())) {
                 if (creditCardValidationStrategy.isPaymentMethodValid(user)) {
                     TransactionRequestMessageDTO transactionRequestMessageDTO = new TransactionRequestMessageDTO();
                     transactionRequestMessageDTO.setUserEmail(user.getUserEmail());
                     transactionRequestMessageDTO.setFrom(currentDate.minusMonths(1));
                     transactionRequestMessageDTO.setTo(currentDate);
 
-                    LOGGER.info("Requesting invoice items for user {}", user.getUserEmail());
-
                     ItemList itemList = paymentMessageHandler.requestInvoiceItems(transactionRequestMessageDTO);
 
                     if (!itemList.getItems().isEmpty()) {
-                        LOGGER.info("Received invoice items for user: items {}", itemList.getItems());
-
                         Invoice invoice = invoiceFactory.createInvoice(user, itemList);
-
-                        //LOGGER.info("Invoice created for user: {}", invoice.getInvoiceStatus());
 
                         NotificationMessageDTO notificationMessageDTO = createNotificationMessage(user, invoice);
 
-                        LOGGER.info("Notification message created for user: {}", notificationMessageDTO.getSubject());
-
                         notificationMessageHandler.sendNotificationMessage(notificationMessageDTO);
-
-                        LOGGER.info("Notification message sent for user: {}", user.getUserEmail());
                     }
 
-                    LOGGER.info("No invoice items received for user: {}", user.getUserEmail());
+                    GeneralRequestDTO generalRequestDTO = new GeneralRequestDTO();
+
+                    generalRequestDTO.setEmail(user.getUserEmail());
+                    generalRequestDTO.setRequestType(GeneralRequestDTO.RequestType.REFILL);
+
+                    walletMessageHandler.sendRefillMessage(generalRequestDTO);
                 }
-
-                GeneralRequestDTO generalRequestDTO = new GeneralRequestDTO();
-
-                generalRequestDTO.setEmail(user.getUserEmail());
-                generalRequestDTO.setRequestType(GeneralRequestDTO.RequestType.REFILL);
-
-                LOGGER.info("Requesting wallet refill for user: {}", generalRequestDTO.getEmail());
-
-                walletMessageHandler.sendRefillMessage(generalRequestDTO);
-
-                LOGGER.info("Wallet refill request sent for user: {}", user.getUserEmail());
-            //}
+            }
         }
     }
 }
