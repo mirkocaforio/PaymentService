@@ -92,8 +92,8 @@ public class InvoiceEmitter {
 
                     ItemList itemList = paymentMessageHandler.requestInvoiceItems(transactionRequestMessageDTO);
 
-                    if (itemList != null) {
-                        LOGGER.info("Received invoice items for user: items {}", itemList.getItems().size());
+                    if (itemList.getItems() != null) {
+                        LOGGER.info("Received invoice items for user: items {}", itemList.getItems());
 
                         Invoice invoice = invoiceFactory.createInvoice(user, itemList);
 
@@ -107,6 +107,8 @@ public class InvoiceEmitter {
 
                         LOGGER.info("Notification message sent for user: {}", user.getUserEmail());
                     }
+
+                    LOGGER.info("No invoice items received for user: {}", user.getUserEmail());
                 }
 
                 GeneralRequestDTO generalRequestDTO = new GeneralRequestDTO();
