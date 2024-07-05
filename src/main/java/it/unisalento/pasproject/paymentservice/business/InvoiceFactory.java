@@ -38,7 +38,6 @@ public class InvoiceFactory {
         invoice.setUserResidenceCity(user.getResidenceCity());
         invoice.setUserResidenceAddress(user.getResidenceAddress());
         invoice.setInvoicePaymentMethod("Credit card");
-        invoice.setInvoicePaymentDate(LocalDateTime.now());
         invoice.setInvoiceItems(itemList);
         invoice.setInvoicePartialAmount(checkOutSetting.convertCreditsToMoney(totalAmount));
         invoice.setInvoiceDelayAmount(0.0F);
