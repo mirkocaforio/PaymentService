@@ -92,23 +92,22 @@ public class InvoiceEmitter {
 
                     ItemList itemList = paymentMessageHandler.requestInvoiceItems(transactionRequestMessageDTO);
 
-                    if (itemList == null) {
-                        continue;
+                    if (itemList != null) {
+
+                        LOGGER.info("Received invoice items for user: items {}", itemList.getItems().size());
+
+                        Invoice invoice = invoiceFactory.createInvoice(user, itemList);
+
+                        LOGGER.info("Invoice created for user: {}", invoice.getInvoiceStatus());
+
+                        NotificationMessageDTO notificationMessageDTO = createNotificationMessage(user, invoice);
+
+                        LOGGER.info("Notification message created for user: {}", notificationMessageDTO.getSubject());
+
+                        notificationMessageHandler.sendNotificationMessage(notificationMessageDTO);
+
+                        LOGGER.info("Notification message sent for user: {}", user.getUserEmail());
                     }
-
-                    LOGGER.info("Received invoice items for user: items {}", itemList.getItems().size());
-
-                    Invoice invoice = invoiceFactory.createInvoice(user, itemList);
-
-                    LOGGER.info("Invoice created for user: {}", invoice.getInvoiceStatus());
-
-                    NotificationMessageDTO notificationMessageDTO = createNotificationMessage(user, invoice);
-
-                    LOGGER.info("Notification message created for user: {}", notificationMessageDTO.getSubject());
-
-                    notificationMessageHandler.sendNotificationMessage(notificationMessageDTO);
-
-                    LOGGER.info("Notification message sent for user: {}", user.getUserEmail());
                 }
 
                 GeneralRequestDTO generalRequestDTO = new GeneralRequestDTO();
