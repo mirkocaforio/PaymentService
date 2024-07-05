@@ -98,7 +98,7 @@ public class InvoiceEmitter {
 
                         Invoice invoice = invoiceFactory.createInvoice(user, itemList);
 
-                        LOGGER.info("Invoice created for user: {}", invoice.getInvoiceStatus());
+                        //LOGGER.info("Invoice created for user: {}", invoice.getInvoiceStatus());
 
                         NotificationMessageDTO notificationMessageDTO = createNotificationMessage(user, invoice);
 
