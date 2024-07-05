@@ -1,5 +1,6 @@
 package it.unisalento.pasproject.paymentservice.business;
 
+import it.unisalento.pasproject.paymentservice.controller.InvoiceController;
 import it.unisalento.pasproject.paymentservice.domain.Invoice;
 import it.unisalento.pasproject.paymentservice.domain.ItemList;
 import it.unisalento.pasproject.paymentservice.domain.User;
@@ -10,6 +11,8 @@ import it.unisalento.pasproject.paymentservice.repositories.UserRepository;
 import it.unisalento.pasproject.paymentservice.service.NotificationMessageHandler;
 import it.unisalento.pasproject.paymentservice.service.PaymentMessageHandler;
 import it.unisalento.pasproject.paymentservice.service.WalletMessageHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +32,8 @@ public class InvoiceEmitter {
     private final NotificationMessageHandler notificationMessageHandler;
     private final PaymentMessageHandler paymentMessageHandler;
     private final WalletMessageHandler walletMessageHandler;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InvoiceEmitter.class);
 
     @Autowired
     public InvoiceEmitter(UserRepository userRepository, CreditCardValidationStrategy creditCardValidationStrategy, InvoiceFactory invoiceFactory, NotificationMessageHandler notificationMessageHandler, PaymentMessageHandler paymentMessageHandler, WalletMessageHandler walletMessageHandler) {
@@ -70,6 +75,8 @@ public class InvoiceEmitter {
     public void emitInvoice() {
         List<User> users = userRepository.findAll();
 
+        LOGGER.info("Emitting invoices for {} users", users.size());
+
         for (User user : users) {
             LocalDate registrationDate = user.getRegistrationDate().toLocalDate();
             LocalDateTime currentDate = LocalDateTime.now();
@@ -81,17 +88,27 @@ public class InvoiceEmitter {
                     transactionRequestMessageDTO.setFrom(currentDate.minusMonths(1));
                     transactionRequestMessageDTO.setTo(currentDate);
 
+                    LOGGER.info("Requesting invoice items for user {}", user.getUserEmail());
+
                     ItemList itemList = paymentMessageHandler.requestInvoiceItems(transactionRequestMessageDTO);
 
                     if (itemList == null) {
                         continue;
                     }
 
+                    LOGGER.info("Received invoice items for user: items {}", itemList.getItems().size());
+
                     Invoice invoice = invoiceFactory.createInvoice(user, itemList);
+
+                    LOGGER.info("Invoice created for user: {}", invoice.getInvoiceStatus());
 
                     NotificationMessageDTO notificationMessageDTO = createNotificationMessage(user, invoice);
 
+                    LOGGER.info("Notification message created for user: {}", notificationMessageDTO.getSubject());
+
                     notificationMessageHandler.sendNotificationMessage(notificationMessageDTO);
+
+                    LOGGER.info("Notification message sent for user: {}", user.getUserEmail());
                 }
 
                 GeneralRequestDTO generalRequestDTO = new GeneralRequestDTO();
@@ -99,7 +116,11 @@ public class InvoiceEmitter {
                 generalRequestDTO.setEmail(user.getUserEmail());
                 generalRequestDTO.setRequestType(GeneralRequestDTO.RequestType.REFILL);
 
+                LOGGER.info("Requesting wallet refill for user: {}", generalRequestDTO.getEmail());
+
                 walletMessageHandler.sendRefillMessage(generalRequestDTO);
+
+                LOGGER.info("Wallet refill request sent for user: {}", user.getUserEmail());
             //}
         }
     }
