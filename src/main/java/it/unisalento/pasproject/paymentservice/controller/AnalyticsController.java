@@ -47,12 +47,11 @@ public class AnalyticsController {
     @GetMapping("/admin")
     @Secured(ROLE_ADMIN)
     public List<AdminAnalyticsDTO> getAdminAnalytics(@RequestParam String granularity) {
-        String adminEmail = userCheckService.getCurrentUserEmail();
         LocalDateTime startDate = LocalDateTime.now().withDayOfYear(1).toLocalDate().atStartOfDay();
         LocalDateTime endDate = LocalDateTime.now();
 
         try {
-            return analyticsService.getAdminAnalytics(adminEmail, startDate, endDate, granularity);
+            return analyticsService.getAdminAnalytics(null, startDate, endDate, granularity);
         } catch (Exception e) {
             throw new MissingDataException(e.getMessage());
         }
