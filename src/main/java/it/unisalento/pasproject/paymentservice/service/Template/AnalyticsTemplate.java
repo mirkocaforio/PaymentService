@@ -28,7 +28,7 @@ public abstract class AnalyticsTemplate<T> {
         operations.add(createProjectionOperation());
         operations.add(createGroupOperation(granularity));
         operations.add(createFinalProjection(granularity));
-        operations.add(createSortOperation(granularity));
+        //operations.add(createSortOperation(granularity));
 
         Aggregation aggregation = Aggregation.newAggregation(operations);
         logger.error("Aggregation: {}", aggregation);
