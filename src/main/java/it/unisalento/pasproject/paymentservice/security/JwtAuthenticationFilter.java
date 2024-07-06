@@ -2,8 +2,8 @@ package it.unisalento.pasproject.paymentservice.security;
 
 
 import it.unisalento.pasproject.paymentservice.dto.UserDetailsDTO;
-import it.unisalento.pasproject.paymentservice.exceptions.AccessDeniedException;
-import it.unisalento.pasproject.paymentservice.exceptions.UserNotAuthorizedException;
+import it.unisalento.pasproject.paymentservice.exception.AccessDeniedException;
+import it.unisalento.pasproject.paymentservice.exception.UserNotAuthorizedException;
 import it.unisalento.pasproject.paymentservice.service.UserCheckService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
