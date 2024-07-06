@@ -114,8 +114,8 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
             case "month" -> projectionOperation
                     .andExpression("toInt(month)").as("month")
                     .andExpression("toInt(year)").as("year");
-            /*case "year" -> projectionOperation
-                    .andExpression("toInt(year)").as("year");*/
+            case "year" -> projectionOperation
+                    .andExpression("toInt(_id.year)").as("year");
             default -> projectionOperation;
         };
 
