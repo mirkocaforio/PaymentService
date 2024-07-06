@@ -27,25 +27,33 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
         if (startDate != null && endDate != null) {
             matchOperation = Aggregation.match(
                     Criteria.where("userEmail").is(email)
-                            .andOperator(Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate))
-                            .and("status").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate),
+                                    Criteria.where("status").is(Invoice.Status.PAID)
+                            )
             );
         } else if (startDate != null) {
             matchOperation = Aggregation.match(
                     Criteria.where("userEmail").is(email)
-                            .and("invoicePaymentDate").gte(startDate)
-                            .and("status").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("invoicePaymentDate").gte(startDate),
+                                    Criteria.where("status").is(Invoice.Status.PAID)
+                            )
             );
         } else if (endDate != null) {
             matchOperation = Aggregation.match(
                     Criteria.where("userEmail").is(email)
-                            .and("invoicePaymentDate").lte(endDate)
-                            .and("isCompleted").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("invoicePaymentDate").lte(endDate),
+                                    Criteria.where("status").is(Invoice.Status.PAID)
+                            )
             );
         } else {
             matchOperation = Aggregation.match(
                     Criteria.where("userEmail").is(email)
-                            .and("status").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("status").is(Invoice.Status.PAID)
+                            )
             );
         }
 

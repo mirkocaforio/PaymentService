@@ -31,12 +31,12 @@ public class AnalyticsController {
     @GetMapping("/user")
     @Secured(ROLE_UTENTE)
     public List<UserAnalyticsDTO> getUserAnalytics(@RequestParam String granularity) {
-        String senderEmail = userCheckService.getCurrentUserEmail();
+        String userEmail = userCheckService.getCurrentUserEmail();
         LocalDateTime startDate = LocalDateTime.now().withDayOfYear(1).toLocalDate().atStartOfDay();
         LocalDateTime endDate = LocalDateTime.now();
 
         try {
-            return analyticsService.getUserAnalytics(senderEmail, startDate, endDate, granularity);
+            return analyticsService.getUserAnalytics(userEmail, startDate, endDate, granularity);
         } catch (Exception e) {
             throw new MissingDataException(e.getMessage());
         }
