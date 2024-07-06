@@ -88,7 +88,7 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
                     .avg("invoiceTotalAmount").as("averageTotalAmount");
             case "year" -> Aggregation.group("year")
                     .count().as("totalInvoices")
-                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte(ConvertOperators.ToDate.toDate("invoiceOverdueDate")))
+                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte("convertedOverdueDate"))
                             .then(0)
                             .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")

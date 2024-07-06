@@ -62,7 +62,10 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
 
     @Override
     protected List<AggregationOperation> getAdditionalOperations() {
-        return List.of();
+        AggregationOperation convertOverdueDate = Aggregation.addFields().addFieldWithValue("convertedOverdueDate",
+                ConvertOperators.Convert.convertValueOf("invoiceOverdueDate").to("date")).build();
+
+        return List.of(convertOverdueDate);
     }
 
     @Override
@@ -91,7 +94,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                     .sum("invoiceTotalAmount").as("totalAmount");
             case "year" -> Aggregation.group("userEmail", "year")
                     .count().as("totalInvoices")
-                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte(ConvertOperators.ToDate.toDate("invoiceOverdueDate")))
+                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte("convertedOverdueDate"))
                             .then(0)
                             .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
