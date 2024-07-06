@@ -26,18 +26,24 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
 
         if (startDate != null && endDate != null) {
             matchOperation = Aggregation.match(
-                    Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate)
-                            .and("invoiceStatus").is(Invoice.Status.PAID)
+                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate)
+                            )
             );
         } else if (startDate != null) {
             matchOperation = Aggregation.match(
-                    Criteria.where("invoicePaymentDate").gte(startDate)
-                            .and("invoiceStatus").is(Invoice.Status.PAID)
+                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("invoicePaymentDate").gte(startDate)
+                            )
             );
         } else if (endDate != null) {
             matchOperation = Aggregation.match(
-                    Criteria.where("invoicePaymentDate").lte(endDate)
-                            .and("invoiceStatus").is(Invoice.Status.PAID)
+                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
+                            .andOperator(
+                                    Criteria.where("invoicePaymentDate").lte(endDate)
+                            )
             );
         } else {
             matchOperation = Aggregation.match(

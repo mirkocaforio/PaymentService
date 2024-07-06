@@ -51,7 +51,7 @@ public class AnalyticsController {
         LocalDateTime endDate = LocalDateTime.now();
 
         try {
-            return analyticsService.getAdminAnalytics(null, startDate, endDate, granularity);
+            return analyticsService.getAdminAnalytics("", startDate, endDate, granularity);
         } catch (Exception e) {
             throw new MissingDataException(e.getMessage());
         }
