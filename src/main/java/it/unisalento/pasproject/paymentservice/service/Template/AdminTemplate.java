@@ -50,10 +50,9 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
 
     @Override
     protected List<AggregationOperation> getAdditionalOperations() {
-        AggregationOperation convertOverdueDate = Aggregation.addFields().addFieldWithValue("convertedOverdueDate",
-                ConvertOperators.Convert.convertValueOf("invoiceOverdueDate").to("date")).build();
-
-        return List.of(convertOverdueDate);
+        return List.of(
+                Aggregation.addFields().addField("convertedOverdueDate").withValue(ConvertOperators.ToDate.toDate("invoiceOverdueDate")).build()
+        );
     }
 
     @Override
@@ -66,8 +65,7 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
                         "invoiceStatus",
                         "invoicePartialAmount",
                         "invoiceDelayAmount",
-                        "invoiceTotalAmount",
-                        "convertedOverdueDate"
+                        "invoiceTotalAmount"
                 )
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%m")).as("month")
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y")).as("year");
