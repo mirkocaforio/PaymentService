@@ -91,9 +91,9 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                     .sum("invoiceTotalAmount").as("totalAmount");
             case "year" -> Aggregation.group("userEmail", "year")
                     .count().as("totalInvoices")
-                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte("invoiceOverdueDate"))
-                            .then(1)
-                            .otherwise(0)).as("overdueInvoices")
+                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte(ConvertOperators.ToDate.toDate("invoiceOverdueDate")))
+                            .then(0)
+                            .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
                     .sum("invoiceTotalAmount").as("totalAmount")
