@@ -29,7 +29,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                     Criteria.where("userEmail").is(email)
                             .andOperator(
                                     Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate),
-                                    Criteria.where("status").is(Invoice.Status.PAID)
+                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
                             )
             );
         } else if (startDate != null) {
@@ -37,7 +37,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                     Criteria.where("userEmail").is(email)
                             .andOperator(
                                     Criteria.where("invoicePaymentDate").gte(startDate),
-                                    Criteria.where("status").is(Invoice.Status.PAID)
+                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
                             )
             );
         } else if (endDate != null) {
@@ -45,14 +45,14 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                     Criteria.where("userEmail").is(email)
                             .andOperator(
                                     Criteria.where("invoicePaymentDate").lte(endDate),
-                                    Criteria.where("status").is(Invoice.Status.PAID)
+                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
                             )
             );
         } else {
             matchOperation = Aggregation.match(
                     Criteria.where("userEmail").is(email)
                             .andOperator(
-                                    Criteria.where("status").is(Invoice.Status.PAID)
+                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
                             )
             );
         }
@@ -73,7 +73,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                         "amount",
                         "invoiceOverdueDate",
                         "invoicePaymentDate",
-                        "status",
+                        "invoiceStatus",
                         "invoicePartialAmount",
                         "invoiceDelayAmount",
                         "invoiceTotalAmount"
