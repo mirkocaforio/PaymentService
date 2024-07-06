@@ -72,13 +72,13 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
                         "invoiceTotalAmount"
                 )
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%m")).as("month")
-                .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y")).as("year");
+                .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y")).as("yearGay");
     }
 
     @Override
     protected GroupOperation createGroupOperation(String granularity) {
         return switch (granularity) {
-            case "month" -> Aggregation.group("year", "month")
+            case "month" -> Aggregation.group("yearGay", "month")
                     .count().as("totalInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
@@ -86,7 +86,7 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
                     .avg("invoicePartialAmount").as("averagePartialAmount")
                     .avg("invoiceDelayAmount").as("averageDelayAmount")
                     .avg("invoiceTotalAmount").as("averageTotalAmount");
-            case "year" -> Aggregation.group("year")
+            case "year" -> Aggregation.group("yearGay")
                     .count().as("totalInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
@@ -113,9 +113,9 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
         projectionOperation = switch (granularity) {
             case "month" -> projectionOperation
                     .andExpression("toInt(month)").as("month")
-                    .andExpression("toInt(year)").as("year");
+                    .andExpression("toInt(yearGay)").as("year");
             case "year" -> projectionOperation
-                    .andExpression("toInt(year)").as("year");
+                    .andExpression("toInt(yearGay)").as("year");
             default -> projectionOperation;
         };
 
@@ -125,8 +125,8 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
     @Override
     protected SortOperation createSortOperation(String granularity) {
         return switch (granularity) {
-            case "month" -> Aggregation.sort(Sort.by(Sort.Order.asc("year"), Sort.Order.asc("month")));
-            case "year" -> Aggregation.sort(Sort.by(Sort.Order.asc("year")));
+            case "month" -> Aggregation.sort(Sort.by(Sort.Order.asc("yearGay"), Sort.Order.asc("month")));
+            case "year" -> Aggregation.sort(Sort.by(Sort.Order.asc("yearGay")));
             default -> null;
         };
     }
