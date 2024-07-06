@@ -1,7 +1,7 @@
 package it.unisalento.pasproject.paymentservice.service.Template;
 
 import it.unisalento.pasproject.paymentservice.domain.Invoice;
-import it.unisalento.pasproject.paymentservice.dto.UserAnalyticsDTO;
+import it.unisalento.pasproject.paymentservice.dto.AdminAnalyticsDTO;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
@@ -10,13 +10,13 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
-    public UserTemplate(MongoTemplate mongoTemplate) {
+public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
+    public AdminTemplate(MongoTemplate mongoTemplate) {
         super(mongoTemplate);
     }
 
     @Override
-    public List<UserAnalyticsDTO> getAnalyticsList(String email, LocalDateTime startDate, LocalDateTime endDate, String granularity) {
+    public List<AdminAnalyticsDTO> getAnalyticsList(String email, LocalDateTime startDate, LocalDateTime endDate, String granularity) {
         return super.getAnalyticsList(email, startDate, endDate, granularity);
     }
 
@@ -26,34 +26,22 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
 
         if (startDate != null && endDate != null) {
             matchOperation = Aggregation.match(
-                    Criteria.where("userEmail").is(email)
-                            .andOperator(
-                                    Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate),
-                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
-                            )
+                    Criteria.where("invoicePaymentDate").gte(startDate).lte(endDate)
+                            .and("invoiceStatus").is(Invoice.Status.PAID)
             );
         } else if (startDate != null) {
             matchOperation = Aggregation.match(
-                    Criteria.where("userEmail").is(email)
-                            .andOperator(
-                                    Criteria.where("invoicePaymentDate").gte(startDate),
-                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
-                            )
+                    Criteria.where("invoicePaymentDate").gte(startDate)
+                            .and("invoiceStatus").is(Invoice.Status.PAID)
             );
         } else if (endDate != null) {
             matchOperation = Aggregation.match(
-                    Criteria.where("userEmail").is(email)
-                            .andOperator(
-                                    Criteria.where("invoicePaymentDate").lte(endDate),
-                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
-                            )
+                    Criteria.where("invoicePaymentDate").lte(endDate)
+                            .and("invoiceStatus").is(Invoice.Status.PAID)
             );
         } else {
             matchOperation = Aggregation.match(
-                    Criteria.where("userEmail").is(email)
-                            .andOperator(
-                                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
-                            )
+                    Criteria.where("invoiceStatus").is(Invoice.Status.PAID)
             );
         }
 
@@ -69,7 +57,6 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
     protected ProjectionOperation createProjectionOperation() {
         return Aggregation.project()
                 .andInclude(
-                        "userEmail",
                         "amount",
                         "invoiceOverdueDate",
                         "invoicePaymentDate",
@@ -85,11 +72,18 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
     @Override
     protected GroupOperation createGroupOperation(String granularity) {
         return switch (granularity) {
-            case "month" -> Aggregation.group("userEmail", "year", "month")
+            case "month" -> Aggregation.group("year", "month")
+                    .count().as("totalInvoices")
+                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte(ConvertOperators.ToDate.toDate("invoiceOverdueDate")))
+                            .then(0)
+                            .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
-                    .sum("invoiceTotalAmount").as("totalAmount");
-            case "year" -> Aggregation.group("userEmail", "year")
+                    .sum("invoiceTotalAmount").as("totalAmount")
+                    .avg("invoicePartialAmount").as("averagePartialAmount")
+                    .avg("invoiceDelayAmount").as("averageDelayAmount")
+                    .avg("invoiceTotalAmount").as("averageTotalAmount");
+            case "year" -> Aggregation.group("year")
                     .count().as("totalInvoices")
                     .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte(ConvertOperators.ToDate.toDate("invoiceOverdueDate")))
                             .then(0)
@@ -107,24 +101,23 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
     @Override
     protected ProjectionOperation createFinalProjection(String granularity) {
         ProjectionOperation projectionOperation = Aggregation.project()
-                .andExpression("userEmail").as("userEmail")
+                .andExpression("totalInvoices").as("totalInvoices")
+                .andExpression("overdueInvoices").as("overdueInvoices")
                 .andExpression("partialAmount").as("partialAmount")
                 .andExpression("delayAmount").as("delayAmount")
-                .andExpression("totalAmount").as("totalAmount");
+                .andExpression("totalAmount").as("totalAmount")
+                .andExpression("averagePartialAmount").as("averagePartialAmount")
+                .andExpression("averageDelayAmount").as("averageDelayAmount")
+                .andExpression("averageTotalAmount").as("averageTotalAmount")
+                .andExpression("delayAmount / totalAmount").as("delayPercentage")
+                .andExpression("overdueInvoices / totalInvoices").as("overduePercentage");
 
         projectionOperation = switch (granularity) {
             case "month" -> projectionOperation
                     .andExpression("toInt(month)").as("month")
                     .andExpression("toInt(year)").as("year");
             case "year" -> projectionOperation
-                    .andExpression("toInt(year)").as("year")
-                    .andExpression("totalInvoices").as("totalInvoices")
-                    .andExpression("overdueInvoices").as("overdueInvoices")
-                    .andExpression("averagePartialAmount").as("averagePartialAmount")
-                    .andExpression("averageDelayAmount").as("averageDelayAmount")
-                    .andExpression("averageTotalAmount").as("averageTotalAmount")
-                    .andExpression("delayAmount / totalAmount").as("delayPercentage")
-                    .andExpression("overdueInvoices / totalInvoices").as("overduePercentage");
+                    .andExpression("toInt(year)").as("year");
             default -> projectionOperation;
         };
 
@@ -146,7 +139,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
     }
 
     @Override
-    protected Class<UserAnalyticsDTO> getDTOClass() {
-        return UserAnalyticsDTO.class;
+    protected Class<AdminAnalyticsDTO> getDTOClass() {
+        return AdminAnalyticsDTO.class;
     }
 }
