@@ -10,7 +10,6 @@ public class UserAnalyticsDTO {
     private int month;
     private int year;
     private int totalInvoices;
-    private int overdueInvoices;
     private float partialAmount;
     private float delayAmount;
     private float totalAmount;
@@ -18,5 +17,4 @@ public class UserAnalyticsDTO {
     private float averageDelayAmount;
     private float averageTotalAmount;
     private float delayPercentage;
-    private float overduePercentage;
 }

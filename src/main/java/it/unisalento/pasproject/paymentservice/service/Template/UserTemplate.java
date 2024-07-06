@@ -62,10 +62,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
 
     @Override
     protected List<AggregationOperation> getAdditionalOperations() {
-        AggregationOperation convertOverdueDate = Aggregation.addFields().addFieldWithValue("convertedOverdueDate",
-                ConvertOperators.Convert.convertValueOf("invoiceOverdueDate").to("date")).build();
-
-        return List.of(convertOverdueDate);
+        return List.of();
     }
 
     @Override
@@ -79,8 +76,7 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                         "invoiceStatus",
                         "invoicePartialAmount",
                         "invoiceDelayAmount",
-                        "invoiceTotalAmount",
-                        "convertedOverdueDate"
+                        "invoiceTotalAmount"
                 )
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%m")).as("month")
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y")).as("year");
@@ -95,9 +91,6 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                     .sum("invoiceTotalAmount").as("totalAmount");
             case "year" -> Aggregation.group("userEmail", "year")
                     .count().as("totalInvoices")
-                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte("convertedOverdueDate"))
-                            .then(0)
-                            .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
                     .sum("invoiceTotalAmount").as("totalAmount")
@@ -123,12 +116,10 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
             case "year" -> projectionOperation
                     .andExpression("toInt(year)").as("year")
                     .andExpression("totalInvoices").as("totalInvoices")
-                    .andExpression("overdueInvoices").as("overdueInvoices")
                     .andExpression("averagePartialAmount").as("averagePartialAmount")
                     .andExpression("averageDelayAmount").as("averageDelayAmount")
                     .andExpression("averageTotalAmount").as("averageTotalAmount")
-                    .andExpression("delayAmount / totalAmount").as("delayPercentage")
-                    .andExpression("overdueInvoices / totalInvoices").as("overduePercentage");
+                    .andExpression("delayAmount / totalAmount").as("delayPercentage");
             default -> projectionOperation;
         };
 

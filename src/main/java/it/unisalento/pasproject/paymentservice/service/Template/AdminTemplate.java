@@ -50,9 +50,7 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
 
     @Override
     protected List<AggregationOperation> getAdditionalOperations() {
-        return List.of(
-                Aggregation.addFields().addField("convertedOverdueDate").withValue(ConvertOperators.ToDate.toDate("invoiceOverdueDate")).build()
-        );
+        return List.of();
     }
 
     @Override
@@ -76,9 +74,6 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
         return switch (granularity) {
             case "month" -> Aggregation.group("year", "month")
                     .count().as("totalInvoices")
-                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte("convertedOverdueDate"))
-                            .then(0)
-                            .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
                     .sum("invoiceTotalAmount").as("totalAmount")
@@ -87,9 +82,6 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
                     .avg("invoiceTotalAmount").as("averageTotalAmount");
             case "year" -> Aggregation.group("year")
                     .count().as("totalInvoices")
-                    .sum(ConditionalOperators.when(Criteria.where("invoicePaymentDate").lte("convertedOverdueDate"))
-                            .then(0)
-                            .otherwise(1)).as("overdueInvoices")
                     .sum("invoicePartialAmount").as("partialAmount")
                     .sum("invoiceDelayAmount").as("delayAmount")
                     .sum("invoiceTotalAmount").as("totalAmount")
@@ -104,15 +96,13 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
     protected ProjectionOperation createFinalProjection(String granularity) {
         ProjectionOperation projectionOperation = Aggregation.project()
                 .andExpression("totalInvoices").as("totalInvoices")
-                .andExpression("overdueInvoices").as("overdueInvoices")
                 .andExpression("partialAmount").as("partialAmount")
                 .andExpression("delayAmount").as("delayAmount")
                 .andExpression("totalAmount").as("totalAmount")
                 .andExpression("averagePartialAmount").as("averagePartialAmount")
                 .andExpression("averageDelayAmount").as("averageDelayAmount")
                 .andExpression("averageTotalAmount").as("averageTotalAmount")
-                .andExpression("delayAmount / totalAmount").as("delayPercentage")
-                .andExpression("overdueInvoices / totalInvoices").as("overduePercentage");
+                .andExpression("delayAmount / totalAmount").as("delayPercentage");
 
         projectionOperation = switch (granularity) {
             case "month" -> projectionOperation
