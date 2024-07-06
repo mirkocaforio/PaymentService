@@ -66,7 +66,8 @@ public class AdminTemplate extends AnalyticsTemplate<AdminAnalyticsDTO> {
                         "invoiceStatus",
                         "invoicePartialAmount",
                         "invoiceDelayAmount",
-                        "invoiceTotalAmount"
+                        "invoiceTotalAmount",
+                        "convertedOverdueDate"
                 )
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%m")).as("month")
                 .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y")).as("year");
