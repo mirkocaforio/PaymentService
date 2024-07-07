@@ -78,8 +78,8 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
                         "invoiceDelayAmount",
                         "invoiceTotalAmount"
                 )
-                .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%m")).as("month")
-                .and(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y")).as("year");
+                .and(ConvertOperators.ToInt.toInt(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%m"))).as("month")
+                .and(ConvertOperators.ToInt.toInt(DateOperators.dateOf("invoicePaymentDate").withTimezone(DateOperators.Timezone.valueOf("UTC")).toString("%Y"))).as("year");
     }
 
     @Override
@@ -111,10 +111,10 @@ public class UserTemplate extends AnalyticsTemplate<UserAnalyticsDTO> {
 
         projectionOperation = switch (granularity) {
             case "month" -> projectionOperation
-                    .andExpression("toInt(month)").as("month")
-                    .andExpression("toInt(year)").as("year");
+                    .andExpression("month").as("month")
+                    .andExpression("year").as("year");
             case "year" -> projectionOperation
-                    .andExpression("toInt(year)").as("year")
+                    .andExpression("year").as("year")
                     .andExpression("totalInvoices").as("totalInvoices")
                     .andExpression("averagePartialAmount").as("averagePartialAmount")
                     .andExpression("averageDelayAmount").as("averageDelayAmount")

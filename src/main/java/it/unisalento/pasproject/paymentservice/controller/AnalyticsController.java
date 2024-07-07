@@ -2,6 +2,7 @@ package it.unisalento.pasproject.paymentservice.controller;
 
 import it.unisalento.pasproject.paymentservice.dto.AdminAnalyticsDTO;
 import it.unisalento.pasproject.paymentservice.dto.UserAnalyticsDTO;
+import it.unisalento.pasproject.paymentservice.exception.BadFormatRequestException;
 import it.unisalento.pasproject.paymentservice.exception.MissingDataException;
 import it.unisalento.pasproject.paymentservice.service.AnalyticsService;
 import it.unisalento.pasproject.paymentservice.service.UserCheckService;
@@ -32,9 +33,13 @@ public class AnalyticsController {
 
     @GetMapping("/user")
     @Secured(ROLE_UTENTE)
-    public List<UserAnalyticsDTO> getUserAnalytics(@RequestParam String granularity) {
+    public List<UserAnalyticsDTO> getUserAnalytics(@RequestParam int month, @RequestParam int year, @RequestParam String granularity) {
+        if(month < 1 || month > 12 || year < 0 || year > LocalDateTime.now().getYear()) {
+            throw new BadFormatRequestException("Wrong request format. Please provide a valid month and year");
+        }
+
         String userEmail = userCheckService.getCurrentUserEmail();
-        LocalDateTime startDate = LocalDateTime.now().withDayOfYear(1).toLocalDate().atStartOfDay();
+        LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime endDate = LocalDateTime.now();
 
         try {
@@ -46,8 +51,12 @@ public class AnalyticsController {
 
     @GetMapping("/admin")
     @Secured(ROLE_ADMIN)
-    public List<AdminAnalyticsDTO> getAdminAnalytics(@RequestParam String granularity) {
-        LocalDateTime startDate = LocalDateTime.now().withDayOfYear(1).toLocalDate().atStartOfDay();
+    public List<AdminAnalyticsDTO> getAdminAnalytics(@RequestParam int month, @RequestParam int year, @RequestParam String granularity) {
+        if(month < 1 || month > 12 || year < 0 || year > LocalDateTime.now().getYear()) {
+            throw new BadFormatRequestException("Wrong request format. Please provide a valid month and year");
+        }
+
+        LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime endDate = LocalDateTime.now();
 
         try {
