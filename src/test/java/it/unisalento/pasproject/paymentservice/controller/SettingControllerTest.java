@@ -52,7 +52,7 @@ public class SettingControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "UTENTE")
+    @WithMockUser(roles = "ADMIN")
     void getSettings_whenUserIsAdmin_shouldReturnSettings() throws Exception {
         when(checkOutSetting.getSetting()).thenReturn(settingDTO);
 

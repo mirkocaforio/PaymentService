@@ -23,7 +23,7 @@ public class TestSecurityConfig {
                 .requestMatchers("/api/invoice/find/all").hasRole("UTENTE")
                 .requestMatchers("/api/invoice/find").hasRole("UTENTE")
                 .requestMatchers("/api/payment/pay/{id}").hasRole("UTENTE")
-                .requestMatchers("/api/settings/payment/get").hasRole("UTENTE")
+                .requestMatchers("/api/settings/payment/get").hasRole("ADMIN")
                 .requestMatchers("/api/settings/payment/update").hasRole("ADMIN")
                 .anyRequest().authenticated()
         );
