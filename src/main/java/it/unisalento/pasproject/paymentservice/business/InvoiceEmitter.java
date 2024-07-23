@@ -55,7 +55,7 @@ public class InvoiceEmitter {
         String notificationTitle = "Invoice # " + invoice.getInvoiceNumber();
         String notificationBody = String.format("Invoice #%s has been issued on %s.\n The total amount is %.2f. The payment is due by %s.\n Please check your Invoice Section on your profile for details.\n\n GreenSpot Team",
                 invoice.getInvoiceNumber(),
-                invoice.getInvoicePaymentDate().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 invoice.getInvoiceTotalAmount(),
                 invoice.getInvoiceOverdueDate().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
 
