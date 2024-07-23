@@ -13,7 +13,8 @@ public class PaymentInvoiceSupervisor {
         this.invoiceEmitter = invoiceEmitter;
     }
 
-    @Scheduled(cron = "0 0 6 * * ?")
+    //@Scheduled(cron = "0 0 6 * * ?")
+    @Scheduled(fixedRate = 15000)
     public void checkInvoiceGeneration() {
         invoiceEmitter.emitInvoice();
     }

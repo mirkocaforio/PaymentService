@@ -77,7 +77,7 @@ public class InvoiceEmitter {
             LocalDate registrationDate = user.getRegistrationDate().toLocalDate();
             LocalDateTime currentDate = LocalDateTime.now();
 
-            if (isInvoiceGenerationDay(registrationDate, currentDate.toLocalDate())) {
+            //if (isInvoiceGenerationDay(registrationDate, currentDate.toLocalDate())) {
                 if (creditCardValidationStrategy.isPaymentMethodValid(user)) {
                     TransactionRequestMessageDTO transactionRequestMessageDTO = new TransactionRequestMessageDTO();
                     transactionRequestMessageDTO.setUserEmail(user.getUserEmail());
@@ -101,7 +101,7 @@ public class InvoiceEmitter {
 
                     walletMessageHandler.sendRefillMessage(generalRequestDTO);
                 }
-            }
+            //}
         }
     }
 }
